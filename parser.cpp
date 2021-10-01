@@ -8,6 +8,7 @@
 #include "token.cpp"
 
 namespace Parser {
+   using Tokenizer::Token;
 
    namespace {
       struct FormulaFactory;
@@ -21,14 +22,14 @@ namespace Parser {
 
    struct Formula {
       friend FormulaFactory;
-      FormulaType type;
-      Tokenizer::Token token;
+      const FormulaType type;
+      const Token token;
 
    protected:
-      Formula(Tokenizer::Token token, FormulaType type) : token(token), type(type) {}
+      Formula(Token token, FormulaType type) : token(token), type(type) {}
 
    private:
-      Formula(Tokenizer::Token token) : Formula(token, FormulaType::Atom) {}
+      Formula(Token token) : Formula(token, FormulaType::Atom) {}
    };
 
    struct UnaryFormula : Formula {
@@ -36,7 +37,7 @@ namespace Parser {
       Formula* right;
 
    private:
-      UnaryFormula(Tokenizer::Token token) : Formula(token, FormulaType::Unary), right(nullptr) {}
+      UnaryFormula(Token token) : Formula(token, FormulaType::Unary), right(nullptr) {}
    };
 
    struct BinaryFormula : Formula {
@@ -45,50 +46,50 @@ namespace Parser {
       Formula* left;
 
    private:
-      BinaryFormula(Tokenizer::Token token) : Formula(token, FormulaType::Binary), right(nullptr), left(nullptr) {}
+      BinaryFormula(Token token) : Formula(token, FormulaType::Binary), right(nullptr), left(nullptr) {}
    };
 
    namespace {
       struct FormulaFactory {
-         static Formula* makeFormula(Tokenizer::Token token) {
+         static Formula* makeFormula(Token token) {
             return new Formula(token);
          }
 
-         static UnaryFormula* makeUnaryFormula(Tokenizer::Token token) {
+         static UnaryFormula* makeUnaryFormula(Token token) {
             return new UnaryFormula(token);
          }
 
-         static BinaryFormula* makeBinaryFormula(Tokenizer::Token token) {
+         static BinaryFormula* makeBinaryFormula(Token token) {
             return new BinaryFormula(token);
          }
       };
    }
 
-   void __print_formula(Parser::Formula* formula, Tokenizer::Token parent) {
+   void __print_formula(Parser::Formula* formula, Token parent) {
       switch (formula->type) {
          case Parser::FormulaType::Atom:
             std::cout << formula->token.name();
             break;
          case Parser::FormulaType::Unary: {
-               auto unary_op = (Parser::UnaryFormula*)formula;
-               std::cout << unary_op->token.name();
-               bool bigterm = unary_op->right->type != Parser::FormulaType::Atom; 
+               auto op = (Parser::UnaryFormula*)formula;
+               std::cout << op->token.name();
+               bool bigterm = op->right->type != Parser::FormulaType::Atom; 
                if (bigterm)
                   std::cout << '(';
-               __print_formula(unary_op->right, unary_op->token);
+               __print_formula(op->right, op->token);
                if (bigterm)
                   std::cout << ')';
                break;
             }
          case Parser::FormulaType::Binary: {
-               auto binary_op = (Parser::BinaryFormula*)formula;
-               bool unwrapable = binary_op->token == Tokenizer::Token::Or or binary_op->token == Tokenizer::Token::And;
-               bool unwrap = unwrapable and binary_op->token == parent;
+               auto op = (Parser::BinaryFormula*)formula;
+               bool unwrapable = op->token == Token::Or or op->token == Token::And;
+               bool unwrap = unwrapable and op->token == parent;
                if (!unwrap)
                   std::cout << '(';
-               __print_formula(binary_op->left, binary_op->token);
-               std::cout << binary_op->token.name();
-               __print_formula(binary_op->right, binary_op->token);
+               __print_formula(op->left, op->token);
+               std::cout << op->token.name();
+               __print_formula(op->right, op->token);
                if (!unwrap)
                   std::cout << ')';
                break;
@@ -104,16 +105,16 @@ namespace Parser {
             std::cout << formula->token.name();
             break;
          case Parser::FormulaType::Unary: {
-               auto unary_op = (Parser::UnaryFormula*)formula;
-               std::cout << unary_op->token.name();
-               __print_formula(unary_op->right, unary_op->token);
+               auto op = (Parser::UnaryFormula*)formula;
+               std::cout << op->token.name();
+               __print_formula(op->right, op->token);
                break;
             }
          case Parser::FormulaType::Binary: {
-               auto binary_op = (Parser::BinaryFormula*)formula;
-               __print_formula(binary_op->left, binary_op->token);
-               std::cout << binary_op->token.name();
-               __print_formula(binary_op->right, binary_op->token);
+               auto op = (Parser::BinaryFormula*)formula;
+               __print_formula(op->left, op->token);
+               std::cout << op->token.name();
+               __print_formula(op->right, op->token);
                break;
             }
       }
@@ -136,20 +137,20 @@ namespace Parser {
       std::cout << ']' << std::endl;
    }
 
-   Formula* parse(std::vector<Tokenizer::Token> tokens) {
-      std::vector<Tokenizer::Token> symbol_stack;
+   Formula* parse(std::vector<Token> tokens) {
+      std::vector<Token> symbol_stack;
       std::vector<Formula*> formula_stack;
       for (auto token : tokens) {
          if (token.is_variable()) {
             formula_stack.push_back(FormulaFactory::makeFormula(token)); 
             continue;
          }
-         if (token == Tokenizer::Token::RParen) {
-            while (symbol_stack.size() > 0 and symbol_stack.back() != Tokenizer::Token::LParen) {
-               Tokenizer::Token symbol = symbol_stack.back();
+         if (token == Token::RParen) {
+            while (symbol_stack.size() > 0 and symbol_stack.back() != Token::LParen) {
+               Token symbol = symbol_stack.back();
                symbol_stack.pop_back();
 
-               int operands = (symbol == Tokenizer::Token::Not) ? 1 : 2;
+               int operands = (symbol == Token::Not) ? 1 : 2;
                if (formula_stack.size() < operands)
                   throw std::runtime_error("Syntax Error: Not Enough Operands");
                
@@ -176,12 +177,12 @@ namespace Parser {
          int precedence = token.precedence();
          // Deal with precedence
          while(symbol_stack.size() > 0 
-               and symbol_stack.back() != Tokenizer::Token::LParen 
+               and symbol_stack.back() != Token::LParen 
                and precedence < symbol_stack.back().precedence()){
-            Tokenizer::Token symbol = symbol_stack.back();
+            Token symbol = symbol_stack.back();
             symbol_stack.pop_back();
 
-            int operands = (symbol == Tokenizer::Token::Not) ? 1 : 2;
+            int operands = (symbol == Token::Not) ? 1 : 2;
             if (formula_stack.size() < operands)
                throw std::runtime_error("Syntax Error: Not Enough Operands");
             
@@ -202,11 +203,11 @@ namespace Parser {
          }
          symbol_stack.push_back(token);
       }
-      while (symbol_stack.size() > 0 and symbol_stack.back() != Tokenizer::Token::LParen) {
-         Tokenizer::Token symbol = symbol_stack.back();
+      while (symbol_stack.size() > 0 and symbol_stack.back() != Token::LParen) {
+         Token symbol = symbol_stack.back();
          symbol_stack.pop_back();
 
-         int operands = (symbol == Tokenizer::Token::Not) ? 1 : 2;
+         int operands = (symbol == Token::Not) ? 1 : 2;
          if (formula_stack.size() < operands)
             throw std::runtime_error("Syntax Error: Not Enough Operands");
          
@@ -229,6 +230,8 @@ namespace Parser {
          throw std::runtime_error("Syntax Error: Extra Left Parenthesis");
       if (formula_stack.size() > 1)
          throw std::runtime_error("Syntax Error: Too Many Operands");
+      if (formula_stack.size() == 0)
+         return nullptr;
       return formula_stack.back();
    }
 

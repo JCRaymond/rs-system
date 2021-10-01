@@ -7,7 +7,8 @@
 
 namespace Tokenizer {
 
-   struct Token {
+   class Token {
+      unsigned val;
 
    public:
       static std::vector<Token> symbols;
@@ -30,6 +31,10 @@ namespace Tokenizer {
       static unsigned next_value;
 
    public:
+      static int num_variables() {
+         return next_value - variables_start;
+      }
+
       static Token Variable(std::string name) {
          auto search = name_token_map.find(name);
          if (search != name_token_map.end())
@@ -37,11 +42,8 @@ namespace Tokenizer {
          return Token(name);
       }
 
-   private:
-
-      unsigned val;
-     
       Token(unsigned val) : val(val) {}
+
       Token(std::string name, bool is_symbol) {
          val = next_value;
          if (is_symbol)
@@ -52,9 +54,8 @@ namespace Tokenizer {
          token_names.push_back(name);
          next_value++;
       }
-      Token(std::string name) : Token(name, false) {}
 
-   public:
+      Token(std::string name) : Token(name, false) {}
 
       bool operator==(const Token &token) const {
          return this->val == token.val;
