@@ -10,9 +10,7 @@
 namespace Parser {
    using Tokenizer::Token;
 
-   namespace {
-      struct FormulaFactory;
-   }
+   struct FormulaFactory;
 
    enum FormulaType {
       Atom,
@@ -49,21 +47,19 @@ namespace Parser {
       BinaryFormula(Token token) : Formula(token, FormulaType::Binary), right(nullptr), left(nullptr) {}
    };
 
-   namespace {
-      struct FormulaFactory {
-         static Formula* makeFormula(Token token) {
-            return new Formula(token);
-         }
+   struct FormulaFactory {
+      static Formula* makeFormula(Token token) {
+         return new Formula(token);
+      }
 
-         static UnaryFormula* makeUnaryFormula(Token token) {
-            return new UnaryFormula(token);
-         }
+      static UnaryFormula* makeUnaryFormula(Token token) {
+         return new UnaryFormula(token);
+      }
 
-         static BinaryFormula* makeBinaryFormula(Token token) {
-            return new BinaryFormula(token);
-         }
-      };
-   }
+      static BinaryFormula* makeBinaryFormula(Token token) {
+         return new BinaryFormula(token);
+      }
+   };
 
    void __print_formula(Parser::Formula* formula, Token parent) {
       switch (formula->type) {
@@ -128,10 +124,23 @@ namespace Parser {
    void print_formulas(std::vector<Formula*> formulas) {
       std::cout << '[';
       if (formulas.size() > 0) {
-         print_formula(formulas[0]);
+         _print_formula(formulas[0]);
          for (int i = 1; i < formulas.size(); i++) {
             std::cout << ", ";
-            print_formula(formulas[i]);
+            _print_formula(formulas[i]);
+         }
+      }
+      std::cout << ']' << std::endl;
+   }
+
+   void print_formulas(std::list<Formula*> formulas) {
+      std::cout << '[';
+      auto it = formulas.begin();
+      if (it != formulas.end()) {
+         _print_formula(*it);
+         while (++it != formulas.end()) {
+            std::cout << ", ";
+            _print_formula(*it);
          }
       }
       std::cout << ']' << std::endl;
