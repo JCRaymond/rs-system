@@ -1,20 +1,22 @@
+#ifndef TOKENIZER_TOKENIZE_CPP
+#define TOKENIZER_TOKENIZE_CPP
+
 #include <cctype>
 #include <exception>
 #include <sstream>
+#include <iostream>
 
 #include "token.cpp"
 
-#include <iostream>
-
 namespace Tokenizer {
 
-   struct SyntaxException : public std::exception {
+   struct UnknownCharacterException : public std::exception {
       std::string message;
 
-      SyntaxException(std::string bad_string, int idx) {
+      UnknownCharacterException(std::string bad_string, int idx) {
          
          std::ostringstream buf;
-         buf << "Unkown character '" << bad_string[idx] << "' at index " << idx << " of \"" << bad_string << "\".";
+         buf << "Unknown character '" << bad_string[idx] << "' at index " << idx << " of \"" << bad_string << "\".";
          message = buf.str();
       }
 
@@ -22,6 +24,16 @@ namespace Tokenizer {
          return message.c_str();
       }
    };
+
+   void print_tokens(std::vector<Tokenizer::Token> tokens) {
+      std::cout << '[';
+      if (tokens.size() > 0) {
+         std::cout << tokens[0].name();
+         for (int i = 1; i < tokens.size(); i++)
+            std::cout << ", " << tokens[i].name();
+      }
+      std::cout << ']' << std::endl;
+   }
 
    namespace {
       bool matches_substr(std::string s, int i, std::string substr) {
@@ -37,14 +49,6 @@ namespace Tokenizer {
          // Ignore vertical whitespace
          if (s[i] == ' ' or s[i] == '\t')
             continue;
-         // Check if the next part of the string is a variable
-         if (isalpha(s[i])) {
-            int j;
-            for (j = i+1; j < s.length() and isalpha(s[j]); j++);
-            tokens.push_back(Token::Variable(s.substr(i, j-i)));
-            i = j - 1;
-            continue;
-         }
          // Check if the next part of the string is a symbol
          for (auto symbol : Token::symbols) {
             if (matches_substr(s, i, symbol.name())) {
@@ -53,11 +57,22 @@ namespace Tokenizer {
                goto nextiter;
             }
          }
+         // Check if the next part of the string is a variable
+         if (isalpha(s[i])) {
+            int j;
+            for (j = i+1; j < s.length() and isalpha(s[j]); j++);
+            tokens.push_back(Token::Variable(s.substr(i, j-i)));
+            i = j - 1;
+            continue;
+         }
          // If we reach here, s[i] is an invalid character   
-         throw SyntaxException(s,i);
+         throw UnknownCharacterException(s,i);
          nextiter:; 
       }
       return tokens;
    }
 
 }
+
+#endif
+

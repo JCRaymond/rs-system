@@ -1,3 +1,6 @@
+#ifndef TOKENIZER_TOKEN_CPP
+#define TOKENIZER_TOKEN_CPP
+
 #include <map>
 #include <vector>
 #include <string>
@@ -16,11 +19,11 @@ namespace Tokenizer {
 
    public:
 
-      static const Token Implies;
+      static const Token LParen;
       static const Token Not;
       static const Token And;
       static const Token Or;
-      static const Token LParen;
+      static const Token Implies;
       static const Token RParen;
    private:
       static const unsigned variables_start;
@@ -53,6 +56,10 @@ namespace Tokenizer {
 
    public:
 
+      bool operator==(const Token &token) const {
+         return this->val == token.val;
+      }
+
       unsigned value() const {
          return val;
       }
@@ -64,17 +71,27 @@ namespace Tokenizer {
       bool is_variable() const {
          return val >= variables_start;
       }
+
+      bool is_symbol() const {
+         return val < variables_start;
+      }
+
+      unsigned precedence() const {
+         return variables_start - val;
+      }
    };
    std::vector<Token> Token::symbols;
    std::map<std::string, Token> Token::name_token_map;
    std::vector<std::string> Token::token_names;
    unsigned Token::next_value = 0;
-   const Token Token::Implies = Token("->",true);
+   const Token Token::LParen  = Token("(",true);
    const Token Token::Not     = Token("~",true);
    const Token Token::And     = Token("^",true);
    const Token Token::Or      = Token("v",true);
-   const Token Token::LParen  = Token("(",true);
+   const Token Token::Implies = Token("->",true);
    const Token Token::RParen  = Token(")",true);
    const unsigned Token::variables_start = Token::next_value;
 };
+
+#endif
 

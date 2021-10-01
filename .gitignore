@@ -1,2 +1,8 @@
+# Ignore all files with no extensions
+*
+!/**/
+!*.*
+
+# Ignore all hidden files (except this one)
 .*
 !.gitignore
