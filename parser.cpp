@@ -97,6 +97,8 @@ namespace Parser {
    }
 
    void _print_formula(Parser::Formula* formula) {
+      if (formula == nullptr)
+         return;
       switch (formula->type) {
          case Parser::FormulaType::Atom:
             std::cout << formula->token.name();
