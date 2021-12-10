@@ -3,6 +3,7 @@
 
 #include <cctype>
 #include <exception>
+#include <string>
 #include <sstream>
 #include <iostream>
 
@@ -25,14 +26,16 @@ namespace Tokenizer {
       }
    };
 
-   void print_tokens(std::vector<Tokenizer::Token> tokens) {
-      std::cout << '[';
+   std::string to_string(std::vector<Tokenizer::Token> tokens) {
+      std::stringstream ss;
+      ss << '[';
       if (tokens.size() > 0) {
-         std::cout << tokens[0].name();
+         ss << tokens[0].name();
          for (int i = 1; i < tokens.size(); i++)
-            std::cout << ", " << tokens[i].name();
+            ss << ", " << tokens[i].name();
       }
-      std::cout << ']' << std::endl;
+      ss << ']';
+      return ss.str();
    }
 
    namespace {
@@ -46,7 +49,7 @@ namespace Tokenizer {
    std::vector<Token> tokenize(std::string s) {
       std::vector<Token> tokens;
       for (int i=0; i < s.length(); i++) {
-         // Ignore vertical whitespace
+         // Ignore horizontal whitespace
          if (s[i] == ' ' or s[i] == '\t')
             continue;
          // Check if the next part of the string is a symbol

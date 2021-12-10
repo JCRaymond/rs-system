@@ -4,6 +4,8 @@
 #include <vector>
 #include <exception>
 #include <iostream>
+#include <string>
+#include <sstream>
 
 #include "token.cpp"
 
@@ -61,20 +63,21 @@ namespace Parser {
       }
    };
 
-   void __print_formula(Parser::Formula* formula, Token parent) {
+   std::string __to_str_formula(Parser::Formula* formula, Token parent) {
+      std::stringstream ss;
       switch (formula->type) {
          case Parser::FormulaType::Atom:
-            std::cout << formula->token.name();
+            ss << formula->token.name();
             break;
          case Parser::FormulaType::Unary: {
                auto op = (Parser::UnaryFormula*)formula;
-               std::cout << op->token.name();
+               ss << op->token.name();
                bool bigterm = op->right->type != Parser::FormulaType::Atom; 
                if (bigterm)
-                  std::cout << '(';
-               __print_formula(op->right, op->token);
+                  ss << '(';
+               ss << __to_str_formula(op->right, op->token);
                if (bigterm)
-                  std::cout << ')';
+                  ss << ')';
                break;
             }
          case Parser::FormulaType::Binary: {
@@ -82,68 +85,70 @@ namespace Parser {
                bool unwrapable = op->token == Token::Or or op->token == Token::And;
                bool unwrap = unwrapable and op->token == parent;
                if (!unwrap)
-                  std::cout << '(';
-               __print_formula(op->left, op->token);
-               std::cout << op->token.name();
-               __print_formula(op->right, op->token);
+                  ss << '(';
+               ss << __to_str_formula(op->left, op->token);
+               ss << op->token.name();
+               ss << __to_str_formula(op->right, op->token);
                if (!unwrap)
-                  std::cout << ')';
+                  ss << ')';
                break;
             }
       }
+      return ss.str();
    }
 
-   void _print_formula(Parser::Formula* formula) {
+   std::string to_str(Parser::Formula* formula) {
       if (formula == nullptr)
-         return;
+         return "";
+      std::stringstream ss;
       switch (formula->type) {
          case Parser::FormulaType::Atom:
-            std::cout << formula->token.name();
+            ss << formula->token.name();
             break;
          case Parser::FormulaType::Unary: {
                auto op = (Parser::UnaryFormula*)formula;
-               std::cout << op->token.name();
-               __print_formula(op->right, op->token);
+               ss << op->token.name();
+               ss << __to_str_formula(op->right, op->token);
                break;
             }
          case Parser::FormulaType::Binary: {
                auto op = (Parser::BinaryFormula*)formula;
-               __print_formula(op->left, op->token);
-               std::cout << op->token.name();
-               __print_formula(op->right, op->token);
+               ss << __to_str_formula(op->left, op->token);
+               ss << op->token.name();
+               ss << __to_str_formula(op->right, op->token);
                break;
             }
       }
+      return ss.str();
    }
 
-   void print_formula(Parser::Formula* formula) {
-      _print_formula(formula);
-      std::cout << std::endl;
-   }
-
-   void print_formulas(std::vector<Formula*> formulas) {
-      std::cout << '[';
+   std::string to_str(std::vector<Formula*> formulas) {
+      std::stringstream ss;
+      ss << '[';
       if (formulas.size() > 0) {
-         _print_formula(formulas[0]);
+         ss << to_str(formulas[0]);
          for (int i = 1; i < formulas.size(); i++) {
-            std::cout << ", ";
-            _print_formula(formulas[i]);
+            ss << ", ";
+            ss << to_str(formulas[i]);
          }
       }
-      std::cout << ']' << std::endl;
+      ss << ']';
+      return ss.str();
    }
 
-   void print_formulas(std::list<Formula*> formulas) {
-      std::cout << '[';
+   std::string to_str(std::list<Formula*> formulas) {
+      std::stringstream ss;
+      ss << '[';
       auto it = formulas.begin();
       if (it != formulas.end()) {
-         _print_formula(*it);
+         ss << to_str(*it);
          while (++it != formulas.end()) {
-            std::cout << ", ";
-            _print_formula(*it);
+            ss << ", ";
+            ss << to_str(*it);
          }
       }
-      std::cout << ']' << std::endl;
+      ss << ']';
+      return ss.str();
    }
 
    Formula* parse(std::vector<Token> tokens) {

@@ -30,8 +30,11 @@ namespace RSSystem {
       return neg_formula;
    }
 
-   bool is_tautology(FormulaStrings str_formulas) {
+   bool is_tautology(FormulaStrings str_formulas, bool print_leaves = false) {
+      // A list of pairs of indecomposable and decomposable sequences
       std::list<FormulaSequence> sequences;
+
+      // Convert the input strings to formula objects
       DecomposableSequence init_decomps;
       for (auto str_formula : str_formulas) {
          auto tokens = Tokenizer::tokenize(str_formula);
@@ -40,50 +43,56 @@ namespace RSSystem {
       }
       IndecomposableSequence init_indecomps;
       sequences.emplace_back(init_indecomps,init_decomps);
+
+      // Begin with the first sequence
       auto curr_seq_it = sequences.begin();
 
-      char n;
+      // bitsets to keep track of which variables are in indecomposable
+      // sequences. `in_pos` keeps track of what variables are in the
+      // sequence, `in_neg` keeps track of what negation of variables are
+      // in the sequence.
+      bitset in_pos(Token::num_variables());
+      bitset in_neg(Token::num_variables());
+      bool is_fundamental;
       int i = 0;
+
+      // Loop through all in/decomposable sequence pairs, as more may be created
       while (curr_seq_it != sequences.end()) {
-         ++i;
          auto& [i_seq, d_seq] = *curr_seq_it;
          auto curr_formula_it = d_seq.begin();
-         int j = 0;
+
+         // Loop through the first potentiall decomposable sequence
          while (curr_formula_it != d_seq.end()) {
             auto curr_formula = *curr_formula_it;
-
-//#define DEBUG
-#ifdef DEBUG
-            std::cout << std::endl;
-            std::cout << i << ' ' << ++j << std::endl;
-            Parser::print_formulas(i_seq);
-            Parser::print_formulas(d_seq);
-            Parser::print_formula(curr_formula);
-            std::cin >> n;
-#endif
-
+            // Split into cases based on what the current formula type is
             switch (curr_formula->type) {
+               // Case: next formula is a single variable - add to i_seq
                case FormulaType::Atom:
                   i_seq.push_back(curr_formula);
                   curr_formula_it = d_seq.erase(curr_formula_it);
                   break;
+               // Case: next formula is the negation of something
                case FormulaType::Unary: {
                   auto op = (UnaryFormula*)curr_formula;
                   if (op->token == Token::Not) {
                      auto sub_formula = op->right;
+                     // Split into cases based on what is being negated
                      switch (sub_formula->type) {
+                        // Case: next formula is the negation of a variable - add to i_seq
                         case FormulaType::Atom:
                            i_seq.push_back(curr_formula);
                            curr_formula_it = d_seq.erase(curr_formula_it);
                            break;
+                        // Case: next formula is negation of a negation - cancel them
                         case FormulaType::Unary: {
                            auto sub_op = (UnaryFormula*)sub_formula;
                            if (op->token == Token::Not) {
-                              auto sub_sub_formula = op->right;
+                              auto sub_sub_formula = sub_op->right;
                               *curr_formula_it = sub_sub_formula;
                            }
                            break;
                         }
+                        // Case: next formula is negation of a binary operation
                         case FormulaType::Binary: {
                            auto op = (BinaryFormula*)sub_formula;
                            if (op->token == Token::And) {
@@ -128,23 +137,53 @@ namespace RSSystem {
                   }
                   break;
                }
-               
             }
          }
-         ++curr_seq_it;
-         break_outer:;
-      }
 
-      i = 0;
-      std::vector<bool> in_pos;
-      std::vector<bool> in_neg;
-      for (auto [i_seq, d_seq] : sequences) {
+         // Full indecomposable sequence found, check if fundamental
+         i++;
+
+         // Reset bitsets to keep track of which variables and their
+         // negations are in the indecomposable sequence.
          in_pos.reset();
          in_neg.reset();
-         i++;
-         std::cout << "Leaf number " << i << "/" << sequences.size() << ": ";
-         Parser::print_formulas(i_seq);
 
+         // This could actually be done more efficiently if I didn't
+         // need to print out the whole sequence. I could use bitsets
+         // instead of lists of formulas for i_seq above, which would
+         // remove redundancies, and I could terminate processing a
+         // sequence if the current indecomposable portion is fundamental
+         for (auto formula : i_seq) {
+            switch (formula->type) {
+               // Case: variable
+               case FormulaType::Atom: {
+                  in_pos.set(formula->token.id());
+                  break;
+               }
+               // Case: negation of a variable
+               case FormulaType::Unary: {
+                  in_neg.set(((UnaryFormula*)formula)->right->token.id());
+                  break;
+               }
+            }
+            if ((in_pos & in_neg).any())
+               break;
+         }
+
+         is_fundamental = (in_pos & in_neg).any();
+         if (print_leaves) {
+            std::cout << "Leaf number " << i << ": " << Parser::to_str(i_seq) << " - " << (is_fundamental ? "fundamental" : "not fundamental") << std::endl;
+            if (!is_fundamental)
+               std::cout << "Full tree cannot be fundamental, terminating..." << std::endl;
+         }
+
+         // If the most recent indecomposable sequence is not fundamental, return false
+         if (!(in_pos & in_neg).any())
+            return false;
+
+         // Go to next sequence if there is one
+         ++curr_seq_it;
+         break_outer:;
       }
       return true;
    }

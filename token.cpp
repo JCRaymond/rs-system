@@ -35,6 +35,10 @@ namespace Tokenizer {
          return next_value - variables_start;
       }
 
+      int id() const {
+         return val - variables_start;
+      }
+
       static Token Variable(std::string name) {
          auto search = name_token_map.find(name);
          if (search != name_token_map.end())
