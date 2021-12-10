@@ -2,6 +2,7 @@
 *
 !/**/
 !*.*
+!Makefile
 
 # Ignore all hidden files (except this one)
 .*
