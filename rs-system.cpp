@@ -8,6 +8,7 @@
 
 #include "parser.cpp"
 #include "tokenizer.cpp"
+#include "bitset.hpp"
 
 namespace RSSystem {
    using Parser::Formula;
@@ -60,6 +61,7 @@ namespace RSSystem {
             Parser::print_formula(curr_formula);
             std::cin >> n;
 #endif
+
             switch (curr_formula->type) {
                case FormulaType::Atom:
                   i_seq.push_back(curr_formula);
@@ -133,10 +135,16 @@ namespace RSSystem {
          break_outer:;
       }
 
-      std::vector<IndecomposableSequence> indecomposable_sequences;
+      i = 0;
+      std::vector<bool> in_pos;
+      std::vector<bool> in_neg;
       for (auto [i_seq, d_seq] : sequences) {
-         if (d_seq.size() != 0)
-            std::cout << "BIG OOF :/" << std::endl;
+         in_pos.reset();
+         in_neg.reset();
+         i++;
+         std::cout << "Leaf number " << i << "/" << sequences.size() << ": ";
+         Parser::print_formulas(i_seq);
+
       }
       return true;
    }
