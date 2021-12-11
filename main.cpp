@@ -24,7 +24,16 @@ int main() {
    //    "a v b v c" or "a ^ b ^ c". IMPLIES is right resolved: "a -> b -> c" means
    //    "a -> (b -> c)".
 
-   std::vector<std::string> formulas = {"~(a->c) -> (~(c v d) -> (a ^ ~c))"};
+   std::vector<std::string> formulas;
+   int n;
+   std::cout << "How many formulas: ";
+   std::cin >> n;
+   for (int i = 0; i < n; i++) {
+      std::string formula;
+      std::cout << "Formula #" << (i+1) << ": ";
+      std::cin >> formula;
+      formulas.push_back(formula);
+   }
 
    timer t;
    // First argument is an iterable of strings containing the formulas

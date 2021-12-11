@@ -95,16 +95,19 @@ namespace RSSystem {
                         // Case: next formula is negation of a binary operation
                         case FormulaType::Binary: {
                            auto op = (BinaryFormula*)sub_formula;
+                           // Case: next formula is negation of AND
                            if (op->token == Token::And) {
                               d_seq.insert(curr_formula_it, negate(op->left));
                               *curr_formula_it = negate(op->right);
                               --curr_formula_it;
+                           // Case: next formula is negation of OR
                            } else if (op->token == Token::Or) {
                               *curr_formula_it = negate(op->left);
                               sequences.emplace(curr_seq_it, i_seq, d_seq);
                               *curr_formula_it = negate(op->right);
                               --curr_seq_it;
                               goto break_outer;
+                           // Case: next formula is negation of IMPLIES
                            } else if (op->token == Token::Implies) {
                               *curr_formula_it = op->left;
                               sequences.emplace(curr_seq_it, i_seq, d_seq);
@@ -118,18 +121,22 @@ namespace RSSystem {
                   }
                   break;
                }
+               // Case: next formula is a binary formula
                case FormulaType::Binary: {
                   auto op = (BinaryFormula*)curr_formula;
+                  // Case: next formula is an AND
                   if (op->token == Token::And) {
                      *curr_formula_it = op->left;
                      sequences.emplace(curr_seq_it, i_seq, d_seq);
                      *curr_formula_it = op->right;
                      --curr_seq_it;
                      goto break_outer;
+                  // Case: next formula is an OR
                   } else if (op->token == Token::Or) {
                      d_seq.insert(curr_formula_it, op->left);
                      *curr_formula_it = op->right;
                      --curr_formula_it;
+                  // Case: next formula is an IMPLIES
                   } else if (op->token == Token::Implies) {
                      d_seq.insert(curr_formula_it, negate(op->left));
                      *curr_formula_it = op->right;
