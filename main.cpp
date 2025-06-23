@@ -25,14 +25,14 @@ int main() {
    //    "a -> (b -> c)".
 
    std::vector<std::string> formulas;
-   int n;
+   std::string response;
    std::cout << "How many formulas: ";
-   std::cin >> n;
+   std::getline(std::cin, response);
+   int n = std::stoi(response);
    for (int i = 0; i < n; i++) {
-      std::string formula;
       std::cout << "Formula #" << (i+1) << ": ";
-      std::cin >> formula;
-      formulas.push_back(formula);
+      std::getline(std::cin, response);
+      formulas.push_back(response);
    }
 
    timer t;
