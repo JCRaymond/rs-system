@@ -23,7 +23,7 @@ namespace Parser {
     struct Formula {
         friend FormulaFactory;
         const FormulaType type;
-        const Token token;
+        Token token;
 
     protected:
         Formula(Token token, FormulaType type) : token(token), type(type) {}
